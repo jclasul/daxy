@@ -1,0 +1,11 @@
+.vscode
+__pycache__
+.DS_Store
+flask/
+*/tests/*
+common/
+*/data/*
+*/glenn/*
+.ipynb_checkpoints
+api.py
+dockupdate.py
