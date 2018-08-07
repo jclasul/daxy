@@ -1,0 +1,4 @@
+gdax
+pymongo
+datetime
+dnspython
