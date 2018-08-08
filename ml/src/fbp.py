@@ -22,7 +22,7 @@ def FBP(db):
     future = m.make_future_dataframe(periods=1, freq='1Min')
     fcst = m.predict(future)
 
-    y_hats = fcst.iloc[-1][['ds','yhat_lower','yhat_upper']].to_dict()
+    y_hats = fcst.iloc[-1][['ds','yhat_lower','yhat_upper','yhat','trend']].to_dict()
     return y_hats
 
 def push_mongo(db, y_hats):
@@ -32,9 +32,17 @@ def push_mongo(db, y_hats):
 if __name__ == "__main__":
     y_hats = FBP(db)
     push_mongo(db, y_hats)
+    timer = time.time()
     
     with client.test.btcusd.watch() as stream:
+        if time.time() - timer > 30:
+            y_hats = FBP(db)
+            push_mongo(db, y_hats)
+            counter = 0
+            timer = time.time()
+
         for change in stream:
+            print(change)
             MONGOKEY = change.get('fullDocument').get('MONGOKEY', None)
 
             if MONGOKEY != 'FBP_UPDATE':
