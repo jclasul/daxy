@@ -1,10 +1,9 @@
-# import PyMongo and connect to a local, running Mongo instance
 from pymongo import MongoClient
-#from pandas import to_datetime
 import datetime
 import time
 import gdax
 import api
+import json
 
 api = api.api()
 mongo_client = MongoClient(api.mongo) #change for mongo
@@ -14,10 +13,31 @@ db = mongo_client.test #change for mongo
 
 class myWebsocketClient(gdax.WebsocketClient):
     def on_open(self):
-        self.url = "wss://ws-feed.gdax.com/"
+        self.url = "wss://ws-feed.prime.coinbase.com"
         self.products = ["BTC-USD"]
         self.retries = 0
         self.popcolumns = ['order_id','client_oid','price']
+
+    def _listen(self):
+        while not self.stop:
+            try:
+                start_t = 0
+                if time.time() - start_t >= 30:
+                    # Set a 30 second ping to keep connection alive
+                    self.ws.ping("keepalive")
+                    start_t = time.time()
+                data = self.ws.recv()
+                msg = json.loads(data)
+            except ValueError as e:
+                self.on_error(e)
+                self.retries += 1
+                self._disconnect()
+            except Exception as e:
+                self.on_error(e)
+                self.retries += 1
+                self._disconnect()
+            else:
+                self.on_message(msg)
 
     def on_message(self, msg):
         OT = msg.get('order_type', None)
@@ -46,7 +66,8 @@ class myWebsocketClient(gdax.WebsocketClient):
                     msg['timestamp'] = time.time()  
                     msg['MONGOKEY'] = 'MARKET_UPDATE' 
                     try:
-                        mongo_collection.insert_one(msg)
+                        #mongo_collection.insert_one(msg)
+                        print(msg)
                     except Exception:
                         print('exception in parsing message to mongodb')
                         self.retries += 1
