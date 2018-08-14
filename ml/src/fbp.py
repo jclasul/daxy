@@ -14,7 +14,8 @@ db = client.test
 counter = 0
 
 def FBP(db):
-    df = pd.DataFrame(list(db.btcusd.find({'MONGOKEY' : 'MARKET_UPDATE'}).sort([('timestamp', 1)])))
+    df = pd.DataFrame(list(db.btcusd.find({'MONGOKEY' : 'MARKET_UPDATE'})\
+        .sort([('timestamp', 1)]).limit(20000)))
     df['time'] = pd.to_datetime(df['time'],infer_datetime_format=True)
     df.rename(columns={'y':'y','time':'ds'}, inplace=True)
 
